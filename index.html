@@ -90,11 +90,11 @@
             bottom: 40px;
         }
 
-        /* --- 새로 추가된 BGM 버튼 및 파도 애니메이션 스타일 --- */
+        /* --- 수정된 BGM 버튼: 크기 축소 및 투명도 증가 --- */
         #bgmBtn {
-            width: 3.5rem; 
-            height: 3.5rem;
-            background-color: rgba(100, 116, 139, 0.85); 
+            width: 2rem;  /* 기존 3.5rem에서 대폭 축소 (약 32px) */
+            height: 2rem;
+            background-color: rgba(100, 116, 139, 0.4); /* 투명하게 변경 */
             color: white;
             position: fixed;
             top: 1.5rem;
@@ -104,22 +104,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             backdrop-filter: blur(4px);
             transition: all 0.2s;
             cursor: pointer;
             border: none;
         }
         #bgmBtn:hover {
-            background-color: rgba(71, 85, 105, 1);
+            background-color: rgba(71, 85, 105, 0.6);
             transform: scale(1.05);
         }
 
+        /* 파도 애니메이션 크기도 작게 변경 */
         .eq-bar {
-            width: 3px;
-            height: 16px;
+            width: 2px;
+            height: 10px;
             background-color: white;
-            border-radius: 2px;
+            border-radius: 1px;
             animation: bounce 1s infinite ease-in-out;
         }
         .eq-bar:nth-child(1) { animation-delay: 0s; }
@@ -322,8 +323,10 @@
     </audio>
 
     <button id="bgmBtn">
-        <i data-lucide="play" id="bgmPlayIcon" class="w-6 h-6 ml-1 text-white"></i>
-        <div id="bgmWaveIcon" class="hidden flex gap-[4px] items-center justify-center h-full">
+        <div id="bgmPlayIconWrapper" class="flex items-center justify-center w-full h-full">
+            <i data-lucide="play" class="w-3.5 h-3.5 ml-0.5 text-white"></i>
+        </div>
+        <div id="bgmWaveIcon" class="hidden flex gap-[2px] items-center justify-center h-full">
             <div class="eq-bar"></div>
             <div class="eq-bar"></div>
             <div class="eq-bar"></div>
@@ -338,23 +341,21 @@
         // --- BGM 제어 스크립트 ---
         const bgmAudio = document.getElementById('bgmAudio');
         const bgmBtn = document.getElementById('bgmBtn');
-        const playIcon = document.getElementById('bgmPlayIcon');
+        const playIconWrapper = document.getElementById('bgmPlayIconWrapper'); // Wrapper 단위로 조작합니다
         const waveIcon = document.getElementById('bgmWaveIcon');
 
-        // 볼륨 설정 (0.0 ~ 1.0) -> 배경음악이므로 0.3 정도가 적당합니다.
         bgmAudio.volume = 0.3;
 
         function updateBgmUI(isPlaying) {
             if (isPlaying) {
-                playIcon.classList.add('hidden');
+                playIconWrapper.classList.add('hidden');
                 waveIcon.classList.remove('hidden');
             } else {
-                playIcon.classList.remove('hidden');
+                playIconWrapper.classList.remove('hidden');
                 waveIcon.classList.add('hidden');
             }
         }
 
-        // 버튼 클릭 시 재생/정지 토글
         bgmBtn.addEventListener('click', () => {
             if (bgmAudio.paused) {
                 bgmAudio.play().then(() => {
@@ -368,23 +369,20 @@
             }
         });
 
-        // 페이지 로드 시 실행될 내용
         document.addEventListener('DOMContentLoaded', () => {
             if (window.lucide) {
                 lucide.createIcons();
             }
 
-            // 자동 재생 시도
             bgmAudio.play().then(() => {
                 updateBgmUI(true);
             }).catch(error => {
-                // 브라우저 정책으로 인해 자동 재생이 막힌 경우
                 console.log("자동 재생이 차단되었습니다. 버튼을 눌러주세요.");
                 updateBgmUI(false);
             });
         });
 
-        // --- 기타 기능 스크립트 (기존과 동일) ---
+        // --- 기타 기능 스크립트 ---
         function showToast(message) {
             var toast = document.getElementById("toast");
             toast.innerText = message;
