@@ -317,7 +317,10 @@
         </div>
 
     </div> 
-    <div id="youtube-player" style="display: none;"></div>
+    <audio id="bgmAudio" loop>
+        <source src="bgm.mp3" type="audio/mpeg">
+    </audio>
+
     <button id="bgmBtn">
         <i data-lucide="play" id="bgmPlayIcon" class="w-6 h-6 ml-1 text-white"></i>
         <div id="bgmWaveIcon" class="hidden flex gap-[4px] items-center justify-center h-full">
@@ -329,82 +332,59 @@
     </button>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (window.lucide) {
-                lucide.createIcons();
-            }
-            loadYouTubeAPI();
-        });
-
-        // 앱스스크립트 주소 (변경되었다면 수정 필요)
+        // 앱스스크립트 주소
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyXgxqgWrmIurQgIUENqH2TcSZa_gwZm53jY3caH9Y6bdf65v9UO_q5mrr-7939MBbi/exec";
 
-        let ytPlayer;
-        let isBgmPlaying = false;
+        // --- BGM 제어 스크립트 ---
+        const bgmAudio = document.getElementById('bgmAudio');
+        const bgmBtn = document.getElementById('bgmBtn');
+        const playIcon = document.getElementById('bgmPlayIcon');
+        const waveIcon = document.getElementById('bgmWaveIcon');
 
-        function loadYouTubeAPI() {
-            const tag = document.createElement('script');
-            tag.src = "https://www.youtube.com/iframe_api";
-            const firstScriptTag = document.getElementsByTagName('script')[0];
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-        }
+        // 볼륨 설정 (0.0 ~ 1.0) -> 배경음악이므로 0.3 정도가 적당합니다.
+        bgmAudio.volume = 0.3;
 
-        window.onYouTubeIframeAPIReady = async function() {
-            try {
-                const response = await fetch(GAS_WEB_APP_URL);
-                const data = await response.json();
-                
-                if (data.youtubeId) {
-                    ytPlayer = new YT.Player('youtube-player', {
-                        height: '0',
-                        width: '0',
-                        videoId: data.youtubeId,
-                        playerVars: {
-                            'autoplay': 1, // 자동재생 시도
-                            'loop': 1,
-                            'playlist': data.youtubeId, 
-                            'controls': 0
-                        },
-                        events: {
-                            'onReady': onPlayerReady,
-                            'onStateChange': onPlayerStateChange
-                        }
-                    });
-                }
-            } catch (error) {
-                console.error("BGM 로드 실패:", error);
-            }
-        };
-
-        function onPlayerReady(event) {
-            ytPlayer.setVolume(30);
-            event.target.playVideo(); 
-        }
-
-        function onPlayerStateChange(event) {
-            const playIcon = document.getElementById('bgmPlayIcon');
-            const waveIcon = document.getElementById('bgmWaveIcon');
-
-            if (event.data === YT.PlayerState.PLAYING) {
-                isBgmPlaying = true;
+        function updateBgmUI(isPlaying) {
+            if (isPlaying) {
                 playIcon.classList.add('hidden');
                 waveIcon.classList.remove('hidden');
             } else {
-                isBgmPlaying = false;
                 playIcon.classList.remove('hidden');
                 waveIcon.classList.add('hidden');
             }
         }
 
-        document.getElementById('bgmBtn').addEventListener('click', () => {
-            if (!ytPlayer) return; 
-            if (isBgmPlaying) {
-                ytPlayer.pauseVideo();
+        // 버튼 클릭 시 재생/정지 토글
+        bgmBtn.addEventListener('click', () => {
+            if (bgmAudio.paused) {
+                bgmAudio.play().then(() => {
+                    updateBgmUI(true);
+                }).catch(error => {
+                    console.error("재생 오류:", error);
+                });
             } else {
-                ytPlayer.playVideo();
+                bgmAudio.pause();
+                updateBgmUI(false);
             }
         });
 
+        // 페이지 로드 시 실행될 내용
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+
+            // 자동 재생 시도
+            bgmAudio.play().then(() => {
+                updateBgmUI(true);
+            }).catch(error => {
+                // 브라우저 정책으로 인해 자동 재생이 막힌 경우
+                console.log("자동 재생이 차단되었습니다. 버튼을 눌러주세요.");
+                updateBgmUI(false);
+            });
+        });
+
+        // --- 기타 기능 스크립트 (기존과 동일) ---
         function showToast(message) {
             var toast = document.getElementById("toast");
             toast.innerText = message;
